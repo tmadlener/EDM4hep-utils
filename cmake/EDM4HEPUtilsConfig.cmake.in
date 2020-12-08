@@ -1,0 +1,24 @@
+#- Config file for the EDM4HEPUtils package
+
+#- Define exported version
+set(EDM4HEPUtils_VERSION "@PROJECT_VERSION@")
+
+# - Init CMakePackageConfigHelpers
+@PACKAGE_INIT@
+
+# - Create relocatable paths to headers.
+# NOTE: Do not strictly need paths as all usage requirements are encoded in
+# the imported targets created later.
+set_and_check(EDM4HEPUtils_INCLUDE_DIR "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
+
+include(CMakeFindDependencyMacro)
+find_dependency(EDM4HEP REQUIRED)
+
+# - Include the targets file to create the imported targets that a client can
+# link to (libraries) or execute (programs)
+# TODO: need targets first
+# include("${CMAKE_CURRENT_LIST_DIR}/EDM4HEPUtilsTargets.cmake")
+
+# print the default "Found:" message and check library location
+include(FindPackageHandleStandardArgs)
+# TODO: need targets first before we can do anything here
