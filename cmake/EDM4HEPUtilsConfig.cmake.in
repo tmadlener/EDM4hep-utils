@@ -16,9 +16,14 @@ find_dependency(EDM4HEP REQUIRED)
 
 # - Include the targets file to create the imported targets that a client can
 # link to (libraries) or execute (programs)
-# TODO: need targets first
-# include("${CMAKE_CURRENT_LIST_DIR}/EDM4HEPUtilsTargets.cmake")
+# TODO: At some point maybe we have a more general target here?
+if(NOT TARGET EDM4HEPUtils::kinematics)
+  include("${CMAKE_CURRENT_LIST_DIR}/EDM4HEPUtilsTargets.cmake")
+endif()
+
+check_required_components(EDM4HEPUtils)
 
 # print the default "Found:" message and check library location
 include(FindPackageHandleStandardArgs)
-# TODO: need targets first before we can do anything here
+get_property(TEST_UTILS_LIBRARY TARGET EDM4HEPUtils::kinematics PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+find_package_handle_standard_args(EDM4HEPUtils DEFAULT_MSG CMAKE_CURRENT_LIST_FILE TEST_UTILS_LIBRARY)
