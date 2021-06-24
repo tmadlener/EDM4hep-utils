@@ -91,3 +91,21 @@ TEST_CASE( "4 momentum works on Reco Particles", "[p4][kinematics][Reconstructed
   REQUIRE(utils::p4(particle, utils::UseMass) == LorentzVectorM{1, 2, 3, 125});
   REQUIRE(utils::p4(particle, utils::UseEnergy) == LorentzVectorE{1, 2, 3, 42});
 }
+
+TEST_CASE( "4 momentum works with user set values", "[p4][kinematics][user set values]" ) {
+  using namespace edm4hep;
+  ReconstructedParticle particle;
+  particle.setMomentum({1.0f, 2.0f, 3.0f});
+  particle.setMass(125.0f);
+  particle.setEnergy(42.0f);
+
+  // Requiring a dedicated mass value gives us a 4-vector with that mass value
+  REQUIRE(utils::p4(particle, utils::SetMass{3.096}) == LorentzVectorM{1, 2, 3, 3.096});
+  // The mass of the particle itself remains unchanged!
+  REQUIRE(particle.getMass() == 125.f);
+
+  // Similar with the energy, if we want a dedicated value we get it in the 4 vector
+  REQUIRE(utils::p4(particle, utils::SetEnergy{1.23f}) == LorentzVectorE{1, 2, 3, 1.23f});
+  // But the underlying particle energy remains unchanged
+  REQUIRE(particle.getEnergy() == 42.f);
+}
