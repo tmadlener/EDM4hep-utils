@@ -49,13 +49,26 @@ namespace impl {
  */
 struct UseMassTag {
   using type = ::edm4hep::LorentzVectorM;
+  static constexpr bool has_value = false;
 };
 
 /**
- * Tag struct for getting 4-moment with momentum + energy
+ * Tag struct for getting 4-momenta with momentum + energy
  */
 struct UseEnergyTag {
   using type = ::edm4hep::LorentzVectorE;
+  static constexpr bool has_value = false;
+};
+
+/**
+ * Tag struct holding an additional value for getting 4 momenta with arbitrary
+ * values instead of the one from the Particle.
+ */
+template<typename T, typename TagT>
+struct TaggedUserValue {
+  using type = typename TagT::type;
+  static constexpr bool has_value = true;
+  T value;
 };
 
 /**
@@ -63,8 +76,15 @@ struct UseEnergyTag {
  * according to the desired type.
  */
 template<typename ParticleT, typename LorentzVectorTypeTag>
-inline typename LorentzVectorTypeTag::type p4(ParticleT const& part, LorentzVectorTypeTag*) {
+inline typename LorentzVectorTypeTag::type p4(ParticleT const& part,
+                                              [[maybe_unused]] LorentzVectorTypeTag* tag ) {
   const auto mom = part.getMomentum();
+  // Either the user wants to set a specific value
+  if constexpr(LorentzVectorTypeTag::has_value) {
+    return typename LorentzVectorTypeTag::type{mom[0], mom[1], mom[2], tag->value};
+  }
+
+  // Or we take the one from the underying particle
   if constexpr(std::is_same_v<typename LorentzVectorTypeTag::type, LorentzVectorM>) {
     return LorentzVectorM{mom[0], mom[1], mom[2], part.getMass()};
   }
@@ -85,9 +105,24 @@ constexpr static impl::UseMassTag UseMass;
 constexpr static impl::UseEnergyTag UseEnergy;
 
 /**
+ * Class to inject a user-defined mass into 4 momentum vectors in the call to
+ * p4
+ */
+using SetMass = impl::TaggedUserValue<float, impl::UseMassTag>;
+
+/**
+ * Class to inject a user-defined energy into 4 momentum vectors in the call to
+ * p4
+ */
+using SetEnergy = impl::TaggedUserValue<float, impl::UseEnergyTag>;
+
+/**
  * Get the 4 momentum vector from a Particle. By default using the momentum and
  * the mass, but can be switched to using the energy when using the UseEnergy as
- * second argument.
+ * second argument. Additionally it is possible to take the momentum from the
+ * particle but set a specific mass or energy value by using SetMass or
+ * SetEnergy as the second argument. The underlying particle will not be changed
+ * in this case.
  */
 template<typename ParticleT, typename LorentzVectorTag=impl::UseMassTag>
 inline typename LorentzVectorTag::type p4(ParticleT const& part, LorentzVectorTag tag=UseMass) {
